@@ -8,9 +8,7 @@ import com.sparta.meeting_platform.domain.User;
 import com.sparta.meeting_platform.domain.UserRoleEnum;
 import com.sparta.meeting_platform.dto.FinalResponseDto;
 import com.sparta.meeting_platform.dto.UserDto.*;
-import com.sparta.meeting_platform.exception.EmailApiException;
-import com.sparta.meeting_platform.exception.PostApiException;
-import com.sparta.meeting_platform.exception.UserApiException;
+import com.sparta.meeting_platform.exception.*;
 import com.sparta.meeting_platform.repository.*;
 import com.sparta.meeting_platform.security.JwtTokenProvider;
 import com.sparta.meeting_platform.security.redis.RedisService;
@@ -62,7 +60,7 @@ public class UserService {
     public ResponseEntity<FinalResponseDto<?>> signup(SignupRequestDto requestDto) {
 
         if (!requestDto.getPassword().equals(requestDto.getPasswordCheck())) {
-            throw new UserApiException("비밀번호가 일치하지 않습니다.");
+            throw new RestApiException(StatusCode.TEST_CODE);
         }
         if (userRepository.existsByUsername(requestDto.getUsername())) {
             throw new UserApiException("이메일 중복체크는 필수입니다.");

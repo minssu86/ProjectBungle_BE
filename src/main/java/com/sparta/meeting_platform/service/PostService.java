@@ -257,11 +257,11 @@ public class PostService {
         }
 
         // isOwner 값 확인
-        if (isOwner) {
-            throw new PostApiException("게시글 개설 실패");
-        } else {
-            user.setIsOwner(true);
-        }
+//        if (isOwner) {
+//            throw new PostApiException("게시글 개설 실패");
+//        } else {
+//            user.setIsOwner(true);
+//        }
 
         //약속시간 예외처리
         DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -587,30 +587,31 @@ public class PostService {
         return post;
     }
 
-//    //게시글 조회 (제목에 포함된 단어로)
-//    public ResponseEntity<FinalResponseDto<?>> getSearch(String keyword, Long userId, Double longitude, Double latitude) throws ParseException {
-//        Optional<User> user = userRepository.findById(userId);
-//
-//        if (!user.isPresent()) {
-//            return new ResponseEntity<>(new FinalResponseDto<>(false, "게시글 검색 실패"), HttpStatus.BAD_REQUEST);
-//        }
-//        LocalDateTime localDateTime = LocalDateTime.now();
-//        String convertedDate1 = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-//        Query query = em.createNativeQuery("SELECT * FROM post AS p "
-//                        + "WHERE ST_DISTANCE_SPHERE(:myPoint, POINT(p.longitude, p.latitude)) < :distance"
-//                        + " AND p.time > :convertedDate1 AND p.id in (select u.post_id from post_categories u"
-//                        + " WHERE u.category in ('" + keyword + "'))"
-//                        + "ORDER BY p.time", Post.class)
-//                .setParameter("convertedDate1", convertedDate1)
-//                .setParameter("myPoint", mapSearchService.makePoint(longitude, latitude))
-//                .setParameter("distance", 400000.0);
-//        List<Post> posts = query.getResultList();
-//
-//        if (posts.size() < 1) {
-//            return new ResponseEntity<>(new FinalResponseDto<>(false, "게시글이 없습니다, 다른단어로 검색해주세요"), HttpStatus.BAD_REQUEST);
-//        }
-//        List<PostResponseDto> postList = postSearchService.searchPostList(posts, userId);
-//        return new ResponseEntity<>(new FinalResponseDto<>(true, "게시글 조회 성공", postList, user.get().getIsOwner()), HttpStatus.OK);
-//    }
+    //게시글 조회 (제목에 포함된 단어로)
+    public ResponseEntity<FinalResponseDto<?>> getSearch(String keyword, Long userId, Double longitude, Double latitude) throws ParseException {
+        Optional<User> user = userRepository.findById(userId);
+
+        if (!user.isPresent()) {
+            return new ResponseEntity<>(new FinalResponseDto<>(false, "게시글 검색 실패"), HttpStatus.BAD_REQUEST);
+        }
+        Query query = em.createNativeQuery("SELECT id, content, created_at, is_letter, latitude, location, longitude,"
+                                                    + "modified_at, personnel, place, time, title, user_id , "
+                                                    + "ROUND(ST_DISTANCE_SPHERE(:myPoint, POINT(p.longitude, p.latitude))) AS 'distance' "
+                                                    + "FROM post AS p "
+                                                    + "WHERE ST_DISTANCE_SPHERE(:myPoint, POINT(p.longitude, p.latitude)) < :distance "
+                                                    + "AND (p.id in (select u.post_id from post_categories u "
+                                                    + "WHERE u.category in ('" + keyword + "')) "
+                                                    + "OR u.tag in ('" + keyword +"'))"
+                                                    + "ORDER BY p.time", Post.class)
+                .setParameter("myPoint", mapSearchService.makePoint(longitude, latitude))
+                .setParameter("distance", 400000.0);
+        List<Post> posts = query.getResultList();
+        System.out.println(posts.get(0).getDistance());
+        if (posts.size() < 1) {
+            return new ResponseEntity<>(new FinalResponseDto<>(false, "게시글이 없습니다, 다른단어로 검색해주세요"), HttpStatus.BAD_REQUEST);
+        }
+        List<PostResponseDto> postList = postSearchService.searchPostList(posts, userId);
+        return new ResponseEntity<>(new FinalResponseDto<>(true, "게시글 조회 성공", postList, user.get().getIsOwner()), HttpStatus.OK);
+    }
 }
 
